@@ -1,0 +1,9 @@
+rain
+====
+
+A project to simulate the probability that it is raining in Seattle.
+
+If one asks their friends whether or not it is raining in Seattle right now,
+and you can assume that each independently lies with some probability,
+the probability that it is actually raining depends on the prior probability
+of rain in Seattle, as this simulation shows.
