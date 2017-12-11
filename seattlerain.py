@@ -1,4 +1,4 @@
-import sys
+import argparse
 import random
 import numpy as np
 
@@ -21,17 +21,29 @@ def test(num_iterations, prior):
     percent_time_raining = sum(res) / len(res)
     return percent_time_raining
 
+def usage():
+    return """python seattlerain.py [iterations] [prior]"""
+
 if __name__ == "__main__":
     default_num_iterations = 1000000
     default_prior = 0.3
 
-    num_iterations = default_num_iterations
-    prior = default_prior
-    if len(sys.argv) > 1:
-        num_iterations = int(sys.argv[1])
-    if len(sys.argv) > 2:
-        prior = float(sys.argv[2])
+    desc = "Simulates the probability of rain in Seattle."
+    parser = argparse.ArgumentParser(description=desc)
+    parser.add_argument('--iterations', dest='iter',
+                        default=default_num_iterations,
+                        help="number of trials to run")
+
+    parser.add_argument('--prior', dest='prior',
+                        default=default_prior,
+                        help="prior probability of rain in Seattle")
+    args = parser.parse_args()
+
+    num_iterations = int(args.iter)
+    prior = float(args.prior)
+
     if not (0 <= prior <= 1):
         raise ValueError("Prior must be a probability from 0 to 1")
+
     percent_time_raining = test(num_iterations, prior)
     print("Percent of time raining: %s" % str(percent_time_raining))
