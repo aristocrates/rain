@@ -56,9 +56,10 @@ def test(num_iterations, prior, num_friends, prob_lie,
 
 if __name__ == "__main__":
     default_num_iterations = 1000000
-    default_prior = 0.3
-    default_num_friends = 3
-    default_prob_lie = 1. / 3.
+    default_prior          = 0.3
+    default_num_friends    = 3
+    default_prob_lie       = 1. / 3.
+    default_decimal_places = 3
 
     desc = "Simulates the probability of rain in Seattle."
     parser = argparse.ArgumentParser(description=desc)
@@ -77,25 +78,34 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--verbose', dest='verb',
                         action='store_true',
                         help="output more information")
+    parser.add_argument('-d', '--decimals', dest='dec',
+                        default=default_decimal_places,
+                        help="number of decimal places to output")
     args = parser.parse_args()
 
     num_iterations = int(args.iter)
     prior          = float(args.prior)
     nfriends       = int(args.nfriends)
     problie        = float(args.plie)
+    ndec           = int(args.dec)
 
+    if not ndec > 0:
+        raise ValueError("Must show at least one decimal place")
     if not (0 <= prior <= 1):
         raise ValueError("Prior must be a probability from 0 to 1")
     if not (0 <= problie <= 1):
         raise ValueError("Probability of friend lying must be between 0 and 1")
 
+    decimal_formatter = "{0:.%sf}" % str(ndec)
+
     if args.verb:
         print("You want to know if it is raining in Seattle")
         print("You call %s friends" % str(nfriends))
         print("  Each friend independently lies with probability %s"
-              % str(problie))
+              % decimal_formatter.format(problie))
         print("")
-        print("It typically rains in Seattle with probability %s" % str(prior))
+        print("It typically rains in Seattle with probability %s"
+              % decimal_formatter.format(prior))
         print("Simulating %s days" % str(num_iterations))
         percent_time_raining = test(num_iterations, prior, nfriends, problie,
                                     give_denom = True)
@@ -104,4 +114,5 @@ if __name__ == "__main__":
     else:
         percent_time_raining = test(num_iterations, prior, nfriends, problie)
 
-    print("Percent of time raining: %s" % str(percent_time_raining['prob']))
+    print("Percent of time raining: %s"
+          % decimal_formatter.format(percent_time_raining['prob']))
