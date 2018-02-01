@@ -45,6 +45,7 @@ If the number of friends is n, and each friend lies with probability
 P(lie) and tells the truth with probability (1 - P(lie))
 
   P(all yes) = P(rain) * ( (1 - P(lie)) )^n + (1 - P(rain)) * ( P(lie) )^n
+
   P(all yes | rain) = (1 - P(lie))^n
 
 Some interesting observation(s):
