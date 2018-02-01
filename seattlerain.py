@@ -3,7 +3,11 @@ Get the probability that it is actually raining in Seattle.
 
 Given that n friends in Seattle each lie with probability p, and each say
 that it is raining, the probability that it is actually raining will depend
-on the prior probability q that it typically rains in Seattle.
+on the prior probability q that it typically rains in Seattle, and can
+be found analytically through Bayes' Rule.
+
+This module numerically approximates this probability in a manner that
+converges for large numbers of tests.
 """
 import argparse
 import random
@@ -11,8 +15,8 @@ import numpy as np
 
 def say(x, prob_lie):
     """
-    x:          1 if actually raining, 0 if actually not raining
-    friend_lie: probability that the friend will lie
+    x:        1 if actually raining, 0 if actually not raining
+    prob_lie: probability that the friend will lie
 
     Returns 1 if the friend says it is raining, 0 otherwise
     """
@@ -26,11 +30,27 @@ def say(x, prob_lie):
 def test(num_iterations, prior, num_friends, prob_lie,
          give_denom = False):
     """
-    num_iterations: the number of times to run
-    prior:          the probability that it is raining given no information
+    Returns a dictionary where result['prob'] gives the experimentally
+    determined probability of rain given that all friends said that it
+    was raining.
+
+    A "trial" first randomly picks whether or not rain occurred according to
+    the prior probability. Then, it picks whether each of the friends
+    are lying or not according to prob_lie. If all friends said that
+    it was raining, then whether or not it actually rained is recorded in
+    the statistics (for any other combination of friend responses, the trial
+    is discarded).
+
+    num_iterations: the number of trials
+                    note that trials where all friends did not say yes count
+                    toward num_iterations but are discarded from the
+                    statistics
+    prior:          the probability that it was raining before hearing
+                    any responses from the friends
     num_friends:    the number of friends who independently say yes
     prob_lie:       the probability by which each friend independently lies
-    give_denom:     if True, then output a tuple (
+    give_denom:     if True, then add key 'denom' holding the number of
+                    times all friends said yes out of all trials
     """
     assert(0 <= prior <= 1)
     assert(0 <= prob_lie <= 1)
@@ -40,7 +60,7 @@ def test(num_iterations, prior, num_friends, prob_lie,
         val = (random.uniform(0, 1) < prior)
         answers = [say(val, prob_lie) for k in range(num_friends)]
         if all(np.array(answers) == 1):
-            res.append(val)        
+            res.append(val)
 
     # if res is empty, throw an error
     if len(res) == 0:
@@ -54,13 +74,30 @@ def test(num_iterations, prior, num_friends, prob_lie,
         percent_time_raining['denom'] = len(res)
     return percent_time_raining
 
+def analytic_answer(prior, num_friends, prob_lie):
+    """
+    Gives the probability of rain using Bayes' Rule
+    """
+    p_all_yes = (prior * (1 - prob_lie)**num_friends
+                 + (1 - prior) * prob_lie**num_friends)
+    if p_all_yes == 0:
+        raise ValueError("With given params," +
+                         "it is impossible for friends to say it is raining")
+    p_all_yes_given_rain = (1 - prob_lie)**num_friends
+    return p_all_yes_given_rain * prior / p_all_yes
+
 if __name__ == "__main__":
+    """
+    Command line behavior
+    """
+    # sane defaults
     default_num_iterations = 1000000
     default_prior          = 0.3
     default_num_friends    = 3
     default_prob_lie       = 1. / 3.
     default_decimal_places = 3
 
+    # argument parsing instructions
     desc = "Simulates the probability of rain in Seattle."
     parser = argparse.ArgumentParser(description=desc)
     parser.add_argument('--iterations', dest='iter',
@@ -81,6 +118,9 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--decimals', dest='dec',
                         default=default_decimal_places,
                         help="number of decimal places to output")
+    parser.add_argument('-a', '--analytic', dest='analytic',
+                        action='store_true',
+                        help="calculate analytic solution with Bayes' Rule")
     args = parser.parse_args()
 
     num_iterations = int(args.iter)
@@ -89,6 +129,7 @@ if __name__ == "__main__":
     problie        = float(args.plie)
     ndec           = int(args.dec)
 
+    # handle some invalid inputs
     if not ndec > 0:
         raise ValueError("Must show at least one decimal place")
     if not (0 <= prior <= 1):
@@ -106,13 +147,22 @@ if __name__ == "__main__":
         print("")
         print("It typically rains in Seattle with probability %s"
               % decimal_formatter.format(prior))
-        print("Simulating %s days" % str(num_iterations))
-        percent_time_raining = test(num_iterations, prior, nfriends, problie,
-                                    give_denom = True)
-        print("  (on %s of these days all friends said yes)"
-              % str(percent_time_raining['denom']))
+        if args.analytic:
+            percent_time_raining = {'prob':
+                                    analytic_answer(prior, nfriends, problie)}
+        else:
+            print("Simulating %s days" % str(num_iterations))
+            percent_time_raining = test(num_iterations, prior, nfriends,
+                                        problie, give_denom = True)
+            print("  (on %s of these days all friends said yes)"
+                  % str(percent_time_raining['denom']))
     else:
-        percent_time_raining = test(num_iterations, prior, nfriends, problie)
+        if args.analytic:
+            percent_time_raining = {'prob':
+                                    analytic_answer(prior, nfriends, problie)}
+        else:
+            percent_time_raining = test(num_iterations, prior, nfriends,
+                                        problie)
 
     print("Percent of time raining: %s"
           % decimal_formatter.format(percent_time_raining['prob']))
