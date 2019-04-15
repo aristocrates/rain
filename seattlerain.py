@@ -11,7 +11,9 @@ converges for large numbers of tests.
 """
 import argparse
 import random
+
 import numpy as np
+
 
 def say(x, prob_lie):
     """
@@ -27,8 +29,9 @@ def say(x, prob_lie):
     else:
         return x ^ 1
 
+
 def test(num_iterations, prior, num_friends, prob_lie,
-         give_denom = False):
+         give_denom=False):
     """
     Returns a dictionary where result['prob'] gives the experimentally
     determined probability of rain given that all friends said that it
@@ -74,6 +77,7 @@ def test(num_iterations, prior, num_friends, prob_lie,
         percent_time_raining['denom'] = len(res)
     return percent_time_raining
 
+
 def analytic_answer(prior, num_friends, prob_lie):
     """
     Gives the probability of rain using Bayes' Rule
@@ -81,10 +85,11 @@ def analytic_answer(prior, num_friends, prob_lie):
     p_all_yes = (prior * (1 - prob_lie)**num_friends
                  + (1 - prior) * prob_lie**num_friends)
     if p_all_yes == 0:
-        raise ValueError("With given params," +
+        raise ValueError("With given params,"
                          "it is impossible for friends to say it is raining")
     p_all_yes_given_rain = (1 - prob_lie)**num_friends
     return p_all_yes_given_rain * prior / p_all_yes
+
 
 if __name__ == "__main__":
     """
@@ -153,7 +158,7 @@ if __name__ == "__main__":
         else:
             print("Simulating %s days" % str(num_iterations))
             percent_time_raining = test(num_iterations, prior, nfriends,
-                                        problie, give_denom = True)
+                                        problie, give_denom=True)
             print("  (on %s of these days all friends said yes)"
                   % str(percent_time_raining['denom']))
     else:
